@@ -102,3 +102,13 @@ xmp {
 .text-justify {
     text-align: justify;
 }
+
+#instance-info {
+    background-color: #cecefa;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#instance-info h4 {
+    margin-bottom: 0;
+}
