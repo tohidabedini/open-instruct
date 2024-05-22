@@ -13,6 +13,23 @@ xmp {
     background-color: aliceblue;
     min-height: 100vh;
 }
+
+#nav-login {
+    width: 100%;
+    max-width: 400px;
+    padding: 50px;
+    border-radius: 5px;
+    background-color: aliceblue;
+    min-height: 100vh;
+}
+
+.center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
 #history-message-region {
     padding: 20px;
     border-radius: 5px;

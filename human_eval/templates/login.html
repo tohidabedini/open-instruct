@@ -11,8 +11,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+<div class="center-wrapper">
     <div class="row">
-        <div id="nav" class="col-md-3">
+        <div id="nav-login" class="col-md-3">
             <!-- Title -->
             <h2 class="text-center" id="title"><a href="/" style="text-decoration: none">🕵 ارزیابی انسانی</a></h2>
 
@@ -42,15 +43,16 @@
                         </div>
                         <input type="submit" class="btn btn-primary m-1" value="ورود" id="submitBtn">
                     </form>
-                    
+
                     <button id="toggleAuthMode" class="btn btn-primary m-1">رفتن به صفحه ثبت نام</button>
-                    
+
                 </div>
             </div>
         </div>
 
         <div class="col-md-9"></div>
     </div>
+</div>
 </body>
 
 <script>
