@@ -95,12 +95,20 @@ def logout():
 def index():
     # check if the user is logged in
     if current_user.is_authenticated:
-        return redirect(url_for('instances', index=0, current_user=current_user))
+        context = {
+            'index': 0,
+            'current_user': current_user,
+            'count_left_indices': 0,
+            'count_all_indices': 0,
+        }
+
+        return redirect(url_for('instances', **context))
     else:
         return redirect(url_for('login'))
 
 
 @app.route("/api/instances-status", methods=["GET"])
+@login_required
 def get_instances_status():
     indices, int_indices = get_all_ids_from_instances(COMPARISON_INSTANCES)
     left_indices = get_instance_index_difference(current_user.username, int_indices)
@@ -109,12 +117,35 @@ def get_instances_status():
 
     return jsonify({"count_left_indices": count_left_indices,
                     "count_all_indices": count_all_indices,
-                    "left_indices": left_indices,
                     }), 200
+
+
+@app.route("/left-instances")
+@login_required
+def get_left_instances():
+    indices, int_indices = get_all_ids_from_instances(COMPARISON_INSTANCES)
+    left_indices = get_instance_index_difference(current_user.username, int_indices)
+    count_left_indices = len(left_indices)
+    count_all_indices = len(int_indices)
+
+    context = {
+        'current_user': current_user,
+        'left_indices': left_indices,
+        'count_left_indices': count_left_indices,
+        'count_all_indices': count_all_indices
+    }
+    return render_template('left_instances.html', **context)
+
 
 @app.route('/instances/<int:index>')
 def instances(index):
-    return render_template('index.html', index=index, current_user=current_user, count_left_indices=0, count_all_indices=0)
+    context = {
+        'index': index,
+        'current_user': current_user,
+        'count_left_indices': 0,
+        'count_all_indices': 0,
+    }
+    return render_template('index.html', **context)
 
 
 @app.route("/api/model-outputs/<int:index>", methods=["GET"])

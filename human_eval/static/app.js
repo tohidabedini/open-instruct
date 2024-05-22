@@ -260,3 +260,8 @@ $("#logout-button").click(function () {
     // redirect to the logout url
     window.location.href = `/logout`;
 });
+
+$("#left-instances-button").click(function () {
+    // opens left-instances url in a new tab
+    window.open(`/left-instances`, '_blank');
+});

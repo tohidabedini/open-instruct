@@ -40,6 +40,18 @@ xmp {
     overflow: auto;
     resize: vertical;
 }
+
+#left-instances-region {
+    padding: 20px;
+    border-radius: 5px;
+    margin: 10px 10px 10px 0;
+    background: oldlace;
+    height: 100vh;
+    min-height: 150px;
+    overflow: auto;
+    resize: vertical;
+}
+
 #model-outputs-region {
     padding: 20px;
     border-radius: 5px;

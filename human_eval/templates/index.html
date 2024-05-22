@@ -14,7 +14,7 @@
     <div class="row">
         <div id="nav" class="col-md-3">
             <!-- Title -->
-            <h2 class="text-center" id="title"><a href="/" style="text-decoration: none">🕵 ارزیابی انسانی</a></h2>
+            <h2 class="text-center" id="title"><a href="" style="text-decoration: none">🕵 ارزیابی انسانی</a></h2>
 
             <!-- Log-in info -->
             <div class="row mb-4" id="login-info">
@@ -29,6 +29,10 @@
 
                         <div id="count-instances-region">
                         تعداد {{ count_left_indices }} نمونه انجام نشده از {{ count_all_indices }} نمونه دارید.
+                        </div>
+
+                        <div class="mt-2 text-center">
+                            <button id="left-instances-button" class="btn btn-primary mt-2">مشاهده نمونه&zwnj;های انجام نشده</button>
                         </div>
 
                     {% else %}
