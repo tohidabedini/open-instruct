@@ -216,11 +216,11 @@ async function submit_feedback() {
         }
         else {
             console.log(response);
-            show_alert("خطا در هنگاه ثبت بازخورد. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
+            show_alert("خطا در هنگام ثبت بازخورد. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
             console.error("خطا در هنگام ثبت بازخورد:", response.status);
         }
     } catch (error) {
-        show_alert("خطا در هنگاه ثبت بازخورد. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
+        show_alert("خطا در هنگام ثبت بازخورد. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
         console.error("خطا در هنگام ثبت بازخورد:", error);
     }
 }
