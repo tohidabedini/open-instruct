@@ -12,7 +12,7 @@ async function rendere_instance(index) {
     // if the response is error, show the out of range message
     if (data.error == "Index out of range") {
         show_alert(
-            "You requested an out-of-range instance. You might have completed all the evaluations. Thank you for your contribution!", 
+            "شما یک نمونه خارج از محدوده درخواست کردید. شما ممکن است تمام ارزیابی ها را تکمیل کرده باشید. از همکاری شما سپاسگذاریم!",
             "danger",
             insert_after_selector="#instance-info",
             timeout=1e10 // set timeout to a very large number so that the alert doesn't disappear
@@ -22,27 +22,34 @@ async function rendere_instance(index) {
     }
 
     clear_all();
-    $("#instance-id").html(`Instance ${index}`);
+    $("#instance-id").html(`نمونه شماره ${index}`);
 
     // let's use a unified format here that support multiple messages, though currently we only have one user prompt.
     var messages = [{"role": "user", "text": data.prompt}];
     var history_message_region = $("#history-message-region");
     history_message_region.empty();
 
-    $.each(messages, function(i, message) {
-        var icon = message.role == "user" ? "🧑" : "🤖";
+$.each(messages, function(i, message) {
+    var icon = message.role == "user" ? "🧑" : "🤖";
+    var definition = message.role == "user" ? "ورودی/سوال داده شده به مدل:" : "پاسخ مدل:";
 
-        var $message_element = $("<div></div>").addClass("row").html(`
-            <div class="col icon-col">
-                <button class="role-icon">${icon}</button>
-            </div>
-            <div class="col message-col history-message-col">
-                <xmp class="message-text">${message.text}</xmp>
-            </div>
-        `);
+    var $icon_and_definition = $("<div></div>").addClass("row").html(`
+        <div class="col icon-col">
+            <button class="role-icon">${icon}</button>
+        </div>
+        <div class="col message-col">
+            <h5>${definition}</h5>
+        </div>
+    `);
 
-        history_message_region.append($message_element);
-    });
+    var $message_text = $("<div></div>").addClass("row").html(`
+        <div class="col message-col history-message-col">
+            <xmp class="message-text">${message.text}</xmp>
+        </div>
+    `);
+
+    history_message_region.append($icon_and_definition).append($message_text);
+});
 
     // now render the completions
     completion_a = data.completions[0];
@@ -67,6 +74,11 @@ function clear_all() {
             <div class="col icon-col">
                 <button class="role-icon">🧑</button>
             </div>
+            <div class="col message-col">
+                <h5>ورودی/سوال داده شده به مدل:</h5>
+            </div>
+        </div>
+        <div class="row">
             <div class="col message-col history-message-col">
                 <xmp class="message-text"></xmp>
             </div>
@@ -102,7 +114,7 @@ async function submit_evaluation() {
 
         // make sure all the required fields are filled
         if (completion_a_is_acceptable == undefined || completion_b_is_acceptable == undefined || preference == undefined) {
-            show_alert("Please fill in all the questions.", "danger", insert_after_selector="#evaluation-submit", timeout=5000);
+            show_alert("لطفا تمامی سوال ها را پاسخ دهید.", "danger", insert_after_selector="#evaluation-submit", timeout=5000);
             return;
         }
         const response = await fetch("/api/submit-evaluation", {
@@ -126,22 +138,22 @@ async function submit_evaluation() {
         
         // if the response is 200, show the success message
         if (response.status == 200) {
-            show_alert("Evaluation data is submitted successfully.", "success", insert_after_selector="#evaluation-submit", timeoutput=5000);
-            console.log("Evaluation data is submitted successfully.");
+            show_alert("ارزیابی با موفقیت ثبت شد.", "success", insert_after_selector="#evaluation-submit", timeoutput=5000);
+            console.log("ارزیابی با موفقیت ثبت شد.");
             current_index++;
             rendere_instance(current_index);
         }
         else if (response.status == 401) {
-            show_alert("You need to log in to submit evaluation data.", "danger", insert_after_selector="#evaluation-submit", timeoutput=5000);
+            show_alert("برای ثبت ارزیابی باید وارد شوید.", "danger", insert_after_selector="#evaluation-submit", timeoutput=5000);
         }
         else {
             console.log(response);
-            show_alert("Error when submitting evaluation data. Please try again.", "danger", insert_after_selector="#evaluation-submit", timeoutput=5000);
-            console.error("Error when submitting evaluation data:", response.status);
+            show_alert("خطا در هنگام ثبت ارزیابی. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#evaluation-submit", timeoutput=5000);
+            console.error("خطا در هنگام ثبت ارزیابی:", response.status);
         }
     } catch (error) {
-        show_alert("Error when submitting evaluation data. Please try again.", "danger", insert_after_selector="#evaluation-submit", timeoutput=5000);
-        console.error("Error when submitting evaluation data:", error);
+        show_alert("خطا در هنگام ثبت ارزیابی. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#evaluation-submit", timeoutput=5000);
+        console.error("خطا در هنگام ثبت ارزیابی:", error);
     }
 }
 
@@ -173,7 +185,7 @@ async function submit_feedback() {
 
         // make sure some fields are filled
         if (instance_quality == undefined && comment == "") {
-            show_alert("No feedback is provided.", "danger", insert_after_selector="#feedback-submit", timeout=5000);
+            show_alert("بازخوردی ارائه نشده است.", "danger", insert_after_selector="#feedback-submit", timeout=5000);
             return;
         }
         const response = await fetch("/api/submit-feedback", {
@@ -196,20 +208,20 @@ async function submit_feedback() {
         
         // if the response is 200, show the success message
         if (response.status == 200) {
-            show_alert("Feedback is submitted successfully.", "success", insert_after_selector="#feedback-submit", timeoutput=5000);
-            console.log("Feedback is submitted successfully.");
+            show_alert("بازخورد با موفقیت ثبت شد.", "success", insert_after_selector="#feedback-submit", timeoutput=5000);
+            console.log("بازخورد با موفقیت ثبت شد.");
         }
         else if (response.status == 401) {
-            show_alert("You need to log in to submit feedback.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
+            show_alert("برای ثبت بازخورد باید وارد شوید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
         }
         else {
             console.log(response);
-            show_alert("Error when submitting feedback data. Please try again.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
-            console.error("Error when submitting feedback data:", response.status);
+            show_alert("خطا در هنگاه ثبت بازخورد. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
+            console.error("خطا در هنگام ثبت بازخورد:", response.status);
         }
     } catch (error) {
-        show_alert("Error when submitting feedback data. Please try again.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
-        console.error("Error when submitting evaluation data:", error);
+        show_alert("خطا در هنگاه ثبت بازخورد. لطفا دوباره تلاش کنید.", "danger", insert_after_selector="#feedback-submit", timeoutput=5000);
+        console.error("خطا در هنگام ثبت بازخورد:", error);
     }
 }
 
@@ -225,7 +237,7 @@ $('#prev-button').click(function () {
         // redirect to the previous instance using url
         window.location.href = `/instances/${current_index - 1}`;
     } else {
-        show_alert("You are already on the first instance.", "danger");
+        show_alert("شما در حال حاضر در اولین نمونه از داده هستید.", "danger");
     }
 });
 

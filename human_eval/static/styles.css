@@ -1,11 +1,11 @@
 body {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: Vazirmatn, sans-serif;
 }
 html {
     overflow-y:scroll;
 }
 xmp {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: Vazirmatn, sans-serif;
 }
 #nav {
     padding: 50px;
@@ -18,7 +18,7 @@ xmp {
     border-radius: 5px;
     margin: 10px 10px 10px 0;
     background: oldlace;
-    height: 25vh;
+    height: 30vh;
     min-height: 150px;
     overflow: auto;
     resize: vertical;
@@ -81,4 +81,24 @@ xmp {
 }
 .eval-form-item {
     margin-bottom: 20px;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-check:checked + .btn-secondary {
+    background-color: #0056b3; /* Dark blue background */
+    border-color: #0056b3; /* Dark blue border */
+    color: white;
+}
+
+.form-check-inline {
+    display: block;
+}
+
+.text-justify {
+    text-align: justify;
 }
