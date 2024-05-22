@@ -184,7 +184,7 @@ async function submit_feedback() {
         console.log("comment:", comment);
 
         // make sure some fields are filled
-        if (instance_quality == undefined && comment == "") {
+        if ((instance_quality === undefined || instance_quality === null) && comment === "") {
             show_alert("بازخوردی ارائه نشده است.", "danger", insert_after_selector="#feedback-submit", timeout=5000);
             return;
         }
@@ -200,7 +200,7 @@ async function submit_feedback() {
                 prompt,
                 completion_a,
                 completion_b,
-                instance_quality,
+                instance_quality: instance_quality || null,
                 comment,
                 evaluator: username 
             }),
