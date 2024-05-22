@@ -296,7 +296,7 @@ def summarize_results():
                 if record.instance_quality not in feedback_records:
                     feedback_records[record.instance_quality] = []
                 feedback_records[record.instance_quality].append(record.instance_index)
-                continue
+                # continue
 
             comparison_records.append(record)
 
@@ -316,24 +316,41 @@ def submit_evaluation():
     evaluation_data = request.get_json()
     print("Got new evaluation data:")
     print(evaluation_data)
-    # write to the database
-    new_record = EvaluationRecord(
+
+    # Check for existing record with the same instance_index and evaluator
+    existing_record = EvaluationRecord.query.filter_by(
         instance_index=evaluation_data["index"],
-        instance_id=COMPARISON_INSTANCES[evaluation_data["index"]]["id"],
-        prompt=evaluation_data["prompt"],
-        model_a=evaluation_data["model_a"],
-        model_b=evaluation_data["model_b"],
-        completion_a=evaluation_data["completion_a"],
-        completion_b=evaluation_data["completion_b"],
-        completion_a_is_acceptable=evaluation_data["completion_a_is_acceptable"],
-        completion_b_is_acceptable=evaluation_data["completion_b_is_acceptable"],
-        preference=evaluation_data["preference"],
-        instance_quality="",
-        comment="",
-        evaluator=evaluation_data["evaluator"],
-        timestamp=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    )
-    db.session.add(new_record)
+        evaluator=evaluation_data["evaluator"]
+    ).first()
+
+    if existing_record:
+        existing_record.instance_id = COMPARISON_INSTANCES[evaluation_data["index"]]["id"]
+        existing_record.prompt = evaluation_data["prompt"]
+        existing_record.model_a = evaluation_data["model_a"]
+        existing_record.model_b = evaluation_data["model_b"]
+        existing_record.completion_a = evaluation_data["completion_a"]
+        existing_record.completion_b = evaluation_data["completion_b"]
+        existing_record.completion_a_is_acceptable = evaluation_data["completion_a_is_acceptable"]
+        existing_record.completion_b_is_acceptable = evaluation_data["completion_b_is_acceptable"]
+        existing_record.preference = evaluation_data["preference"]
+        existing_record.timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    else:
+        new_record = EvaluationRecord(
+            instance_index=evaluation_data["index"],
+            instance_id=COMPARISON_INSTANCES[evaluation_data["index"]]["id"],
+            prompt=evaluation_data["prompt"],
+            model_a=evaluation_data["model_a"],
+            model_b=evaluation_data["model_b"],
+            completion_a=evaluation_data["completion_a"],
+            completion_b=evaluation_data["completion_b"],
+            completion_a_is_acceptable=evaluation_data["completion_a_is_acceptable"],
+            completion_b_is_acceptable=evaluation_data["completion_b_is_acceptable"],
+            preference=evaluation_data["preference"],
+            evaluator=evaluation_data["evaluator"],
+            timestamp=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        )
+        db.session.add(new_record)
+
     db.session.commit()
     return jsonify({"message": "Evaluation data submitted successfully"}), 200
 
@@ -344,27 +361,43 @@ def submit_feedback():
     feedback_data = request.get_json()
     print("Got new feedback:")
     print(feedback_data)
-    # write to the database
-    new_record = EvaluationRecord(
-        instance_index=feedback_data["index"],
-        instance_id=COMPARISON_INSTANCES[feedback_data["index"]]["id"],
-        prompt=feedback_data["prompt"],
-        model_a=feedback_data["model_a"],
-        model_b=feedback_data["model_b"],
-        completion_a=feedback_data["completion_a"],
-        completion_b=feedback_data["completion_b"],
-        completion_a_is_acceptable="",
-        completion_b_is_acceptable="",
-        preference="",
-        instance_quality=feedback_data["instance_quality"],
-        comment=feedback_data["comment"],
-        evaluator=feedback_data["evaluator"],
-        timestamp=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    )
-    db.session.add(new_record)
-    db.session.commit()
-    return jsonify({"message": "Evaluation data submitted successfully"}), 200
 
+    # Check for existing record with the same instance_index and evaluator
+    existing_record = EvaluationRecord.query.filter_by(
+        instance_index=feedback_data["index"],
+        evaluator=feedback_data["evaluator"]
+    ).first()
+
+    # If an existing record is found, update it
+    if existing_record:
+        existing_record.instance_id = COMPARISON_INSTANCES[feedback_data["index"]]["id"]
+        existing_record.prompt = feedback_data["prompt"]
+        existing_record.model_a = feedback_data["model_a"]
+        existing_record.model_b = feedback_data["model_b"]
+        existing_record.completion_a = feedback_data["completion_a"]
+        existing_record.completion_b = feedback_data["completion_b"]
+        existing_record.instance_quality = feedback_data["instance_quality"]
+        existing_record.comment = feedback_data["comment"] if (feedback_data["comment"] != "") else existing_record.comment
+        existing_record.timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    else:
+        # Create a new record if no existing record is found
+        new_record = EvaluationRecord(
+            instance_index=feedback_data["index"],
+            instance_id=COMPARISON_INSTANCES[feedback_data["index"]]["id"],
+            prompt=feedback_data["prompt"],
+            model_a=feedback_data["model_a"],
+            model_b=feedback_data["model_b"],
+            completion_a=feedback_data["completion_a"],
+            completion_b=feedback_data["completion_b"],
+            instance_quality=feedback_data["instance_quality"],
+            comment=feedback_data["comment"],
+            evaluator=feedback_data["evaluator"],
+            timestamp=time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        )
+        db.session.add(new_record)
+
+    db.session.commit()
+    return jsonify({"message": "Feedback submitted successfully"}), 200
 
 def main():
     parser = argparse.ArgumentParser()
