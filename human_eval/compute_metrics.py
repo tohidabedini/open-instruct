@@ -73,8 +73,13 @@ def get_comparison_results(records, target_model_a, target_model_b):
             print("Unknown preference value.")
             print(record)
 
-    # thre can be multiple annotations for each instance; use the first comparison result for each instance
-    earlies_comparison_results = [results[0] for _, results in comparison_results.items()]
+    # there can be multiple annotations for each instance; use the first comparison result for each instance
+    # earlies_comparison_results = [results[0] for _, results in comparison_results.items()]
+    earlies_comparison_results = []
+    for _, results in comparison_results.items():
+        for result in results:
+            earlies_comparison_results.append(result)
+
     model_wins_counter = Counter(earlies_comparison_results)
     model_wins_rates = {
         result: count / len(earlies_comparison_results) for result, count in model_wins_counter.items()

@@ -100,9 +100,21 @@ def index():
         return redirect(url_for('login'))
 
 
+@app.route("/api/instances-status", methods=["GET"])
+def get_instances_status():
+    indices, int_indices = get_all_ids_from_instances(COMPARISON_INSTANCES)
+    left_indices = get_instance_index_difference(current_user.username, int_indices)
+    count_left_indices = len(left_indices)
+    count_all_indices = len(int_indices)
+
+    return jsonify({"count_left_indices": count_left_indices,
+                    "count_all_indices": count_all_indices,
+                    "left_indices": left_indices,
+                    }), 200
+
 @app.route('/instances/<int:index>')
 def instances(index):
-    return render_template('index.html', index=index, current_user=current_user)
+    return render_template('index.html', index=index, current_user=current_user, count_left_indices=0, count_all_indices=0)
 
 
 @app.route("/api/model-outputs/<int:index>", methods=["GET"])
@@ -122,15 +134,47 @@ def summary():
     return jsonify(results), 200
 
 
+def get_all_ids_from_instances(instances_list):
+    ids = []
+    int_ids = []
+    for i in range(len(instances_list)):
+        ids.append(instances_list[i]["id"])
+        int_ids.append(i)
+    return set(ids), set(int_ids)
+
+
+def get_instance_index_difference(evaluator, int_indices):
+    existing_indices = db.session.query(EvaluationRecord.instance_index).filter_by(evaluator=evaluator).all()
+    existing_indices = [record.instance_index for record in existing_indices]
+
+    difference = set(int_indices) - set(existing_indices)
+
+    return sorted(list(difference))
 
 
 def count_user_contributions(users, records):
+
+    all_instances_count = len(COMPARISON_INSTANCES)
+    indices, int_indices = get_all_ids_from_instances(COMPARISON_INSTANCES)
+
+    # print(len(COMPARISON_INSTANCES))
+    # print(COMPARISON_INSTANCES[0])
+    # print(records[0].instance_index)
+
     user_contributions = {}
     for user in users:
-        user_contributions[user.username] = 0
+        user_contributions[user.username] = {"count_done": 0, "count_left": 0, "left_instances": [], "done_instances": [], }
     for record in records:
-        user_contributions[record.evaluator] += 1
+        user_contributions[record.evaluator]["count_done"] += 1
+        user_contributions[record.evaluator]["count_left"] = all_instances_count - user_contributions[record.evaluator]["count_done"]
+        user_contributions[record.evaluator]["done_instances"].append(record.instance_index)
+
+    for user in users:
+        # user_contributions[user.username]["left_instances"] = sorted(list(int_indices.difference(set(user_contributions[user.username]["done_instances"]))))
+        user_contributions[user.username]["left_instances"] = get_instance_index_difference(user.username, int_indices)
+
     user_contributions["all"] = len(records)
+
     return user_contributions
 
 
@@ -216,7 +260,12 @@ def get_comparison_results(records, target_model_a, target_model_b):
             print(record)
 
     # thre can be multiple annotations for each instance; use the latest comparison result for each instance
-    latest_comparison_results = [results[-1] for _, results in comparison_results.items()]
+    # latest_comparison_results = [results[-1] for _, results in comparison_results.items()]
+    latest_comparison_results = []
+    for _, results in comparison_results.items():
+        for result in results:
+            latest_comparison_results.append(result)
+
     model_wins_counter = Counter(latest_comparison_results)
     model_wins_rates = {
         result: count / len(latest_comparison_results) for result, count in model_wins_counter.items()

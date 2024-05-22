@@ -7,7 +7,9 @@ rendere_instance(current_index);
 // Fetch the model outputs from the API and update the UI
 async function rendere_instance(index) {
     const response = await fetch(`/api/model-outputs/${index}`);
+    const response_count = await fetch(`/api/instances-status`);
     const data = await response.json();
+    const count_data = await response_count.json();
 
     // if the response is error, show the out of range message
     if (data.error == "Index out of range") {
@@ -28,6 +30,10 @@ async function rendere_instance(index) {
     var messages = [{"role": "user", "text": data.prompt}];
     var history_message_region = $("#history-message-region");
     history_message_region.empty();
+
+    var count_instances_region = $("#count-instances-region");
+    count_instances_region.empty();
+
 
 $.each(messages, function(i, message) {
     var icon = message.role == "user" ? "🧑" : "🤖";
@@ -60,6 +66,10 @@ $.each(messages, function(i, message) {
     `);
     $("#completion-B-col").html(`
         <xmp class="message-text" id="${completion_b.model}-completion">${completion_b.completion}</xmp>
+    `);
+
+    count_instances_region.html(`
+        تعداد ${count_data.count_left_indices} نمونه انجام نشده از ${count_data.count_all_indices} نمونه دارید.
     `);
 
     // Change the URL path with the current index
@@ -244,4 +254,9 @@ $('#prev-button').click(function () {
 $("#next-button").click(function () {
     // redirect to the next instance using url
     window.location.href = `/instances/${current_index + 1}`;
+});
+
+$("#logout-button").click(function () {
+    // redirect to the logout url
+    window.location.href = `/logout`;
 });
