@@ -1,3 +1,4 @@
 flask
 flask-sqlalchemy
 flask-login
+python-dotenv==1.0.1

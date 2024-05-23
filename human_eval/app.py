@@ -9,14 +9,16 @@ from flask import Flask, render_template, redirect, url_for, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from dotenv import load_dotenv
 
 random.seed(42)
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.getcwd(), 'data', 'evaluation.db')
 print(app.config['SQLALCHEMY_DATABASE_URI'])
-app.config['SECRET_KEY'] = '123456' # replace with a real secret key
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -216,7 +218,7 @@ def get_progress(records):
         if index not in completed_instance_indices:
             missing_instances.append(index)
     return {
-        "completed": len(completed_instance_indices),
+        "completed_by_only_one_of_annotators": len(completed_instance_indices),
         "total": len(COMPARISON_INSTANCES),
         "missing_indices": missing_instances,
     }
