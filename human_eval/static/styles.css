@@ -161,3 +161,13 @@ xmp {
     text-align: right;
     direction: rtl;
 }
+
+.user-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.user-list-item .username {
+    flex: 1;
+}

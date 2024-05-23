@@ -22,8 +22,18 @@
                     <!-- check if logged in -->
                     {% if current_user.is_authenticated %}
                         شما با نام کاربری <b>{{ current_user.username }}</b> وارد شده‌اید.
+
+                        {% if current_user.is_admin %}
+                            <div class="mt-2 text-center">
+                                <button id="approve-users-button" class="btn btn-success mt-2">تأیید کاربران</button>
+                            </div>
+                            <div class="mt-2 text-center">
+                                <button id="list-users-button" class="btn btn-info mt-2">مشاهده کاربران</button>
+                            </div>
+                        {% endif %}
+
                         <div class="mt-2 text-center">
-                            <button id="logout-button" class="btn btn-primary mt-2">خروج</button>
+                            <button id="logout-button" class="btn btn-danger mt-2">خروج</button>
                         </div>
                         <div class="divider"></div>
 
@@ -42,7 +52,6 @@
                             <button id="redirect-instance-number" class="btn btn-primary mt-2">برو به نمونه</button>
                         </div>
                         <div class="divider"></div>
-
 
                     {% else %}
                         شما باید وارد شوید تا بتوانید ارزیابی را ارسال کنید. [<a href="{{ url_for('login') }}">ورود</a>]

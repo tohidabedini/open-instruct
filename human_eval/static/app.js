@@ -273,3 +273,13 @@ $(document).ready(function() {
         window.location.href = "/instances/" + instanceNumber;
     });
 });
+
+$("#approve-users-button").click(function () {
+    // redirect to the logout url
+    window.location.href = `/admin/approve_users`;
+});
+
+$("#list-users-button").click(function () {
+    // redirect to the logout url
+    window.location.href = `/admin/list_users`;
+});

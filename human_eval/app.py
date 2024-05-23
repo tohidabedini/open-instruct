@@ -32,7 +32,8 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(200))
-
+    approved = db.Column(db.Boolean, default=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
 class EvaluationRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,10 +65,13 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
-            login_user(user)
-            return redirect(url_for('index'))
+            if user.approved:
+                login_user(user)
+                return redirect(url_for('index'))
+            else:
+                return 'اکانت شما تأیید نشده است.'
         else:
-            return 'Invalid username or password'
+            return 'نام کاربری یا رمز عبور وارد شده نامعتبر است.'
     else:
         return render_template('login.html')
 
@@ -78,13 +82,46 @@ def signup():
         username = request.form.get('username')
         password = request.form.get('password')
         hashed_password = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_password)
+        new_user = User(username=username, password=hashed_password, approved=False)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
     else:
         return render_template('login.html')
 
+
+@app.route('/admin/approve_users', methods=['GET', 'POST'])
+@login_required
+def approve_users():
+    if not current_user.is_admin:
+        return 'شما مجوز مشاهده این صفحه را ندارید.'
+
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        user = User.query.get(user_id)
+        user.approved = True
+        db.session.commit()
+        return redirect(url_for('approve_users'))
+
+    unapproved_users = User.query.filter_by(approved=False).all()
+    return render_template('approve_users.html', users=unapproved_users)
+
+
+@app.route('/admin/list_users', methods=['GET', 'POST'])
+@login_required
+def list_users():
+    if not current_user.is_admin:
+        return 'شما مجوز مشاهده این صفحه را ندارید.'
+
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        user = User.query.get(user_id)
+        user.approved = False
+        db.session.commit()
+        return redirect(url_for('list_users'))
+
+    approved_users = User.query.filter_by(approved=True).all()
+    return render_template('list_users.html', users=approved_users)
 
 @app.route('/logout')
 @login_required
@@ -211,14 +248,14 @@ def count_user_contributions(users, records):
     return user_contributions
 
 
-def get_progress(records):
+def get_progress(records, users):
     completed_instance_indices = set([record.instance_index for record in records])
     missing_instances = []
     for index in range(len(COMPARISON_INSTANCES)):
         if index not in completed_instance_indices:
             missing_instances.append(index)
     return {
-        "completed_by_only_one_of_annotators": len(completed_instance_indices),
+        "completed_at_least_by_one_of_annotators": len(completed_instance_indices),
         "total": len(COMPARISON_INSTANCES),
         "missing_indices": missing_instances,
     }
@@ -353,7 +390,7 @@ def summarize_results():
     results["user_contributions"] = count_user_contributions(users, records)
 
     # get the missing instances
-    results["progress"] = get_progress(records)
+    results["progress"] = get_progress(records, users)
     
     # get the comparison model pairs
     model_pairs = set([tuple(sorted([record.model_a, record.model_b])) for record in records])
@@ -512,7 +549,7 @@ def main():
     if not os.path.exists(os.path.join(os.getcwd(), 'data', 'evaluation.db')):
         with app.app_context():
             db.create_all()
-            new_user = User(username="admin", password=generate_password_hash("admin"))
+            new_user = User(username="admin", password=generate_password_hash(os.getenv("ADMIN_PASS")), approved=True, is_admin=True)
             db.session.add(new_user)
             db.session.commit()
 
