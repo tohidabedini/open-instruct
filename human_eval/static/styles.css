@@ -141,3 +141,23 @@ xmp {
 #instance-info h4 {
     margin-bottom: 0;
 }
+
+.divider {
+    border-top: 1px solid #ccc;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#instance-number-input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+::placeholder {
+    text-align: right;
+    direction: rtl;
+}

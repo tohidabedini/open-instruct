@@ -265,3 +265,11 @@ $("#left-instances-button").click(function () {
     // opens left-instances url in a new tab
     window.open(`/left-instances`, '_blank');
 });
+
+$(document).ready(function() {
+    $("#redirect-instance-number").click(function () {
+        var instanceNumber = $("#instance-number-input").val();
+
+        window.location.href = "/instances/" + instanceNumber;
+    });
+});
