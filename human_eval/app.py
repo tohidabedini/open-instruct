@@ -236,10 +236,10 @@ def count_user_contributions(users, records):
         user_contributions[user.username] = {"count_done": 0, "count_left": 0, "left_instances": [], "done_instances": [], }
     for record in records:
         user_contributions[record.evaluator]["count_done"] += 1
-        user_contributions[record.evaluator]["count_left"] = all_instances_count - user_contributions[record.evaluator]["count_done"]
         user_contributions[record.evaluator]["done_instances"].append(record.instance_index)
 
     for user in users:
+        user_contributions[user.username]["count_left"] = all_instances_count - user_contributions[user.username]["count_done"]
         # user_contributions[user.username]["left_instances"] = sorted(list(int_indices.difference(set(user_contributions[user.username]["done_instances"]))))
         user_contributions[user.username]["left_instances"] = get_instance_index_difference(user.username, int_indices)
 
