@@ -178,11 +178,14 @@ def get_left_instances():
 
 @app.route('/instances/<int:index>')
 def instances(index):
+    existing_feedback = EvaluationRecord.query.filter_by(instance_index=index, evaluator=current_user.username).first()
+
     context = {
         'index': index,
         'current_user': current_user,
         'count_left_indices': 0,
         'count_all_indices': 0,
+        'existing_feedback': existing_feedback,
     }
     return render_template('index.html', **context)
 
@@ -200,6 +203,8 @@ def get_model_outputs(index):
 @app.route("/summary", methods=["GET"])
 @login_required
 def summary():
+    # if not current_user.is_admin:
+    #     return 'شما مجوز مشاهده این صفحه را ندارید.'
     results = summarize_results()
     return jsonify(results), 200
 
@@ -329,7 +334,7 @@ def get_comparison_results(records, target_model_a, target_model_b):
             print("Unknown preference value.")
             print(record)
 
-    # thre can be multiple annotations for each instance; use the latest comparison result for each instance
+    # tehre can be multiple annotations for each instance; use the latest comparison result for each instance
     # latest_comparison_results = [results[-1] for _, results in comparison_results.items()]
     latest_comparison_results = []
     for _, results in comparison_results.items():
@@ -353,6 +358,10 @@ def get_comparison_results(records, target_model_a, target_model_b):
         "comparison_agreement": None,
         "relexed_comparison_agreement": None,
     }
+    # print(comparison_results)
+    # print(model_wins_rates)
+    # print(model_wins_counter)
+    # print(len(latest_comparison_results))
     if instances_with_multiple_annotations:
         agreed_comparison = 0
         relexed_agreed_comparison = 0

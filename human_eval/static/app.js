@@ -97,6 +97,12 @@ function clear_all() {
     $('.completion-col').empty(); 
     $('input[type="checkbox"], input[type="radio"]').prop('checked', false);
     $('textarea').val('');
+    // $('textarea').each(function() {
+    //     var currentValue = $(this).val();
+    //     if (currentValue === 'None' || currentValue === null || currentValue === undefined) {
+    //         $(this).val('');
+    //     }
+    // });
 }
 
 
