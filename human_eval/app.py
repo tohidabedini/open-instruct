@@ -179,7 +179,6 @@ def get_left_instances():
 @app.route('/instances/<int:index>')
 def instances(index):
     existing_feedback = EvaluationRecord.query.filter_by(instance_index=index, evaluator=current_user.username).first()
-
     context = {
         'index': index,
         'current_user': current_user,
@@ -187,6 +186,12 @@ def instances(index):
         'count_all_indices': 0,
         'existing_feedback': existing_feedback,
     }
+    if current_user.is_admin:
+        model_a = COMPARISON_INSTANCES[index]["completions"][0]["model"]
+        model_b = COMPARISON_INSTANCES[index]["completions"][1]["model"]
+        context["model_a"] = model_a
+        context["model_b"] = model_b
+
     return render_template('index.html', **context)
 
 
@@ -195,7 +200,8 @@ def get_model_outputs(index):
     if 0 <= index < len(COMPARISON_INSTANCES):
         prompt = COMPARISON_INSTANCES[index]["prompt"]
         completions = COMPARISON_INSTANCES[index]["completions"]
-        random.shuffle(completions)
+        if not current_user.is_admin:
+            random.shuffle(completions)
         return jsonify({"prompt": prompt, "completions": completions}), 200
     return jsonify({"error": "Index out of range"}), 200
 

@@ -132,6 +132,9 @@
                             <div class="d-flex justify-content-center">
                                 <button class="completion-icon">A</button>
                             </div>
+                            {% if current_user.is_admin %}
+                                <div>{{ model_a }}</div>
+                            {% endif %}
                         </div>
                         <div class="row">
                             <div class="col completion-col" id="completion-A-col">
@@ -144,6 +147,9 @@
                             <div class="d-flex justify-content-center">
                                 <button class="completion-icon">B</button>
                             </div>
+                            {% if current_user.is_admin %}
+                                <div>{{ model_b }}</div>
+                            {% endif %}
                         </div>
                         <div class="row">
                             <div class="col completion-col" id="completion-B-col">
