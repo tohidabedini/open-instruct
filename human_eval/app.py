@@ -398,7 +398,7 @@ def get_comparison_results(records, target_model_a, target_model_b):
 
 def summarize_results():
     results = {}
-    users = User.query.all()
+    users = User.query.filter_by(approved=True).all()
     records = EvaluationRecord.query.all()
 
     # get the number of completed instances for all and each user

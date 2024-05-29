@@ -1,6 +1,7 @@
 #!/bin/bash
 
-directories=("./data/jsonls/joined_jsonls.jsonl"
+directories=("./data/jsonls/joined_jsonls_clean.jsonl"
+"./data/jsonls/joined_jsonls.jsonl"
 "./data/jsonls/eval_instances_tulu_1.jsonl"
 "./data/jsonls/llama3_alpaca_4_2048_5e-7_persian_system_prompt_vs_llama3_alpaca_4_2048_persian_system_prompt.jsonl"
 "./data/jsonls/llama3_alpaca_4_2048_5e-7_persian_system_prompt_vs_Part V1.jsonl"
@@ -11,7 +12,8 @@ directories=("./data/jsonls/joined_jsonls.jsonl"
 "./data/jsonls/llama3_base_persian_system_prompt_vs_llama3_alpaca_4_2048_persian_system_prompt.jsonl"
 "./data/jsonls/llama3_base_persian_system_prompt_vs_llama3_base.jsonl"
 "./data/jsonls/llama3_base_persian_system_prompt_vs_Part V1.jsonl"
-"./data/jsonls/llama3_base_vs_Part V1.jsonl")
+"./data/jsonls/llama3_base_vs_Part V1.jsonl"
+"./data/jsonls/llama3_alpaca_4_2048_5e-7_persian_system_prompt_vs_llama3_alpaca_clean_4_2048_persian_system_prompt.jsonl")
 
 
 directory_index=0
