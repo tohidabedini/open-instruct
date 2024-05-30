@@ -209,8 +209,8 @@ def get_model_outputs(index):
 @app.route("/summary", methods=["GET"])
 @login_required
 def summary():
-    # if not current_user.is_admin:
-    #     return 'شما مجوز مشاهده این صفحه را ندارید.'
+    if not current_user.is_admin:
+        return 'شما مجوز مشاهده این صفحه را ندارید.'
     results = summarize_results()
     return jsonify(results), 200
 
