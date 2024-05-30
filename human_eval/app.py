@@ -27,6 +27,21 @@ login_manager.init_app(app)
 # GLOBAL VARIABLE for the comparison instances
 COMPARISON_INSTANCES=[]
 
+RANGES_FOR_CATEGORIES = [
+    (0, 10),
+    (10, 20),
+    (20, 30),
+    (30, 40),
+    (40, 50),
+    (50, 60),
+    (60, 70),
+    (70, 80),
+    (80, 90),
+    (90, 100),
+    (100, 110),
+    (110, 280),
+    (280, 307)]
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -284,9 +299,16 @@ def get_progress(records, users):
     }
 
 
-def get_acceptance_results(records, target_model_a, target_model_b, user=None):
+def safe_divide(a, b):
+    return a / b if b != 0 else None
+
+def get_acceptance_results(records, target_model_a, target_model_b, user=None, by_category=False, range_for_category=None):
     if user is not None:
         records = filter_records_by_user(records, user)
+
+    if by_category:
+        records = filter_records_by_category(records, range_for_category)
+
 
     acceptance_results = {
         target_model_a: {},
@@ -302,8 +324,11 @@ def get_acceptance_results(records, target_model_a, target_model_b, user=None):
             acceptance_results[record.model_b][instance_id] = []
         acceptance_results[record.model_b][instance_id].append(record.completion_b_is_acceptable)
 
-    # count how many instances get multiple annotations
-    instances_with_multiple_annotations = [instance_id for instance_id, results in acceptance_results[record.model_a].items() if len(results) > 1]
+    if len(records) == 0:
+        instances_with_multiple_annotations = []
+    else:
+        # count how many instances get multiple annotations
+        instances_with_multiple_annotations = [instance_id for instance_id, results in acceptance_results[record.model_a].items() if len(results) > 1]
     agreement_results = {
         "num_instances_with_multiple_annotations": len(instances_with_multiple_annotations),
         "acceptance_agreement": None,
@@ -323,11 +348,15 @@ def get_acceptance_results(records, target_model_a, target_model_b, user=None):
             (agreed_model_a_acceptance + agreed_model_b_acceptance) / (2 * len(instances_with_multiple_annotations))
         agreement_results[f"{target_model_a}_acceptance_agreement"] = agreed_model_a_acceptance / len(instances_with_multiple_annotations)
         agreement_results[f"{target_model_b}_acceptance_agreement"] = agreed_model_b_acceptance / len(instances_with_multiple_annotations)
+
+    sum_target_model_a = sum([1 if x[-1] == "yes" else 0 for _, x in acceptance_results[target_model_a].items()])
+    sum_target_model_b = sum([1 if x[-1]=="yes" else 0 for _, x in acceptance_results[target_model_b].items()])
+
     output = {
-        f"{target_model_a}": sum([1 if x[-1]=="yes" else 0 for _, x in acceptance_results[target_model_a].items()]) / len(acceptance_results[target_model_a]),
-        f"{target_model_b}": sum([1 if x[-1]=="yes" else 0 for _, x in acceptance_results[target_model_b].items()]) / len(acceptance_results[target_model_b]),
+        f"{target_model_a}": safe_divide(sum_target_model_a, len(acceptance_results[target_model_a])),
+        f"{target_model_b}": safe_divide(sum_target_model_b, len(acceptance_results[target_model_b]))
     }
-    if user is None:
+    if (user is None) and (by_category is False):
         output["agreement"] = agreement_results
 
     return output
@@ -342,6 +371,23 @@ def get_acceptance_and_comparison_results_per_user(records, target_model_a, targ
 
     return out
 
+
+def get_acceptance_and_comparison_results_for_all_categories(records, target_model_a, target_model_b, ranges_for_category):
+    out = dict()
+    for range_for_category in ranges_for_category:
+        range_for_category = range(*range_for_category)
+        this = get_acceptance_and_comparison_results_per_category(records, target_model_a, target_model_b, range_for_category)
+        out[str(range_for_category)]=(this)
+    return out
+
+
+def get_acceptance_and_comparison_results_per_category(records, target_model_a, target_model_b, range_for_category):
+    out = dict()
+    out["acceptance"] = get_acceptance_results(records, target_model_a, target_model_b, by_category=True, range_for_category=range_for_category)
+    out["comparison"] = get_comparison_results(records, target_model_a, target_model_b, by_category=True, range_for_category=range_for_category)
+
+    return out
+
 def filter_records_by_user(records, user):
     out = []
     for record in records:
@@ -350,9 +396,22 @@ def filter_records_by_user(records, user):
 
     return out
 
-def get_comparison_results(records, target_model_a, target_model_b, user=None):
+
+def filter_records_by_category(records, range_):
+    out = []
+    for record in records:
+        if int(record.instance_id) in range_:
+            out.append(record)
+
+    return out
+
+
+def get_comparison_results(records, target_model_a, target_model_b, user=None, by_category=False, range_for_category=None):
     if user is not None:
         records = filter_records_by_user(records, user)
+
+    if by_category:
+        records = filter_records_by_category(records, range_for_category)
 
     comparison_results = {}
     for record in records:
@@ -394,7 +453,7 @@ def get_comparison_results(records, target_model_a, target_model_b, user=None):
     model_wins_rates[f"{target_model_b}_wins"] = \
         sum([v for k, v in model_wins_rates.items() if target_model_b in k])
 
-    if user is None:
+    if (user is None) and (by_category is False):
         # count how many instances get multiple annotations
         instances_with_multiple_annotations = [instance_id for instance_id, results in comparison_results.items() if len(results) > 1]
 
@@ -435,7 +494,7 @@ def get_comparison_results(records, target_model_a, target_model_b, user=None):
     return model_wins_rates
 
 
-def summarize_results(verbose=False):
+def summarize_results(verbose=False, by_category=True):
     results = {}
     users = User.query.filter_by(approved=True, is_admin=False).all()
     records = EvaluationRecord.query.all()
@@ -475,14 +534,27 @@ def summarize_results(verbose=False):
 
         acceptance_results = get_acceptance_results(comparison_records, target_model_a, target_model_b)
         comparison_results = get_comparison_results(comparison_records, target_model_a, target_model_b)
-        comparison_results_per_user = get_acceptance_and_comparison_results_per_user(comparison_records, target_model_a, target_model_b, users)
+
+
+
+        results_per_user = get_acceptance_and_comparison_results_per_user(comparison_records, target_model_a, target_model_b, users)
 
         results["results"][f"{target_model_a}_vs_{target_model_b}"] = {
             "acceptance_results": acceptance_results,
             "comparison_results": comparison_results,
             "feedback_records": feedback_records,
-            "results_per_user": comparison_results_per_user
+            "results_per_user": results_per_user,
         }
+
+        if by_category:
+            ranges_for_category = RANGES_FOR_CATEGORIES
+
+            results_by_category = get_acceptance_and_comparison_results_for_all_categories(comparison_records,target_model_a,target_model_b, ranges_for_category=ranges_for_category)
+
+            results["results"][f"{target_model_a}_vs_{target_model_b}"]["results_per_category"] = results_by_category
+
+
+
     return results
     
 
