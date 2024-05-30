@@ -206,12 +206,17 @@ def get_model_outputs(index):
     return jsonify({"error": "Index out of range"}), 200
 
 
-@app.route("/summary", methods=["GET"])
+@app.route("/summary", defaults={'verbose': False}, methods=["GET"])
+@app.route("/summary/", defaults={'verbose': False}, methods=["GET"])
+@app.route("/summary/<int:verbose>", methods=["GET"])
 @login_required
-def summary():
+def summary(verbose):
     if not current_user.is_admin:
         return 'شما مجوز مشاهده این صفحه را ندارید.'
-    results = summarize_results()
+
+    verbose = True if verbose == 1 else False
+
+    results = summarize_results(verbose=verbose)
     return jsonify(results), 200
 
 
@@ -233,7 +238,7 @@ def get_instance_index_difference(evaluator, int_indices):
     return sorted(list(difference))
 
 
-def count_user_contributions(users, records):
+def count_user_contributions(users, records, verbose=False):
 
     all_instances_count = len(COMPARISON_INSTANCES)
     indices, int_indices = get_all_ids_from_instances(COMPARISON_INSTANCES)
@@ -244,17 +249,23 @@ def count_user_contributions(users, records):
 
     user_contributions = {}
     for user in users:
-        user_contributions[user.username] = {"count_done": 0, "count_left": 0, "left_instances": [], "done_instances": [], }
-    for record in records:
-        user_contributions[record.evaluator]["count_done"] += 1
-        user_contributions[record.evaluator]["done_instances"].append(record.instance_index)
+        user_contributions[user.username] = {"count_done": 0, "count_left": 0, }
 
     for user in users:
-        user_contributions[user.username]["count_left"] = all_instances_count - user_contributions[user.username]["count_done"]
-        # user_contributions[user.username]["left_instances"] = sorted(list(int_indices.difference(set(user_contributions[user.username]["done_instances"]))))
+        user_contributions[user.username] = {"left_instances": [], "done_instances": [], }
         user_contributions[user.username]["left_instances"] = get_instance_index_difference(user.username, int_indices)
+        user_contributions[user.username]["done_instances"] = sorted(list(set(int_indices) - set(user_contributions[user.username]["left_instances"])))
+
+    for user in users:
+        user_contributions[user.username]["count_left"] = len(user_contributions[user.username]["left_instances"])
+        user_contributions[user.username]["count_done"] = all_instances_count - user_contributions[user.username]["count_left"]
 
     user_contributions["all"] = len(records)
+
+    if not verbose:
+        for user in users:
+            del user_contributions[user.username]["left_instances"]
+            del user_contributions[user.username]["done_instances"]
 
     return user_contributions
 
@@ -267,12 +278,16 @@ def get_progress(records, users):
             missing_instances.append(index)
     return {
         "completed_at_least_by_one_of_annotators": len(completed_instance_indices),
-        "total": len(COMPARISON_INSTANCES),
-        "missing_indices": missing_instances,
+        "total_instances": len(COMPARISON_INSTANCES),
+        "records(annotations)_count": len(records),
+        # "missing_indices": missing_instances,
     }
 
 
-def get_acceptance_results(records, target_model_a, target_model_b):
+def get_acceptance_results(records, target_model_a, target_model_b, user=None):
+    if user is not None:
+        records = filter_records_by_user(records, user)
+
     acceptance_results = {
         target_model_a: {},
         target_model_b: {},
@@ -308,15 +323,37 @@ def get_acceptance_results(records, target_model_a, target_model_b):
             (agreed_model_a_acceptance + agreed_model_b_acceptance) / (2 * len(instances_with_multiple_annotations))
         agreement_results[f"{target_model_a}_acceptance_agreement"] = agreed_model_a_acceptance / len(instances_with_multiple_annotations)
         agreement_results[f"{target_model_b}_acceptance_agreement"] = agreed_model_b_acceptance / len(instances_with_multiple_annotations)
-
-    return {
+    output = {
         f"{target_model_a}": sum([1 if x[-1]=="yes" else 0 for _, x in acceptance_results[target_model_a].items()]) / len(acceptance_results[target_model_a]),
         f"{target_model_b}": sum([1 if x[-1]=="yes" else 0 for _, x in acceptance_results[target_model_b].items()]) / len(acceptance_results[target_model_b]),
-        "agreement": agreement_results,
     }
+    if user is None:
+        output["agreement"] = agreement_results
+
+    return output
 
 
-def get_comparison_results(records, target_model_a, target_model_b):
+def get_acceptance_and_comparison_results_per_user(records, target_model_a, target_model_b, users):
+    out = dict()
+    for user in users:
+        out[user.username]=dict()
+        out[user.username]["comparison"] = get_comparison_results(records, target_model_a, target_model_b, user)
+        out[user.username]["acceptance"] = get_acceptance_results(records, target_model_a, target_model_b, user)
+
+    return out
+
+def filter_records_by_user(records, user):
+    out = []
+    for record in records:
+        if record.evaluator == user.username:
+            out.append(record)
+
+    return out
+
+def get_comparison_results(records, target_model_a, target_model_b, user=None):
+    if user is not None:
+        records = filter_records_by_user(records, user)
+
     comparison_results = {}
     for record in records:
         instance_id = record.instance_id
@@ -356,53 +393,55 @@ def get_comparison_results(records, target_model_a, target_model_b):
         sum([v for k, v in model_wins_rates.items() if target_model_a in k])
     model_wins_rates[f"{target_model_b}_wins"] = \
         sum([v for k, v in model_wins_rates.items() if target_model_b in k])
-    
-    # count how many instances get multiple annotations
-    instances_with_multiple_annotations = [instance_id for instance_id, results in comparison_results.items() if len(results) > 1]
-    agreement_results = {
-        "num_instances_with_multiple_annotations": len(instances_with_multiple_annotations),
-        "comparison_agreement": None,
-        "relexed_comparison_agreement": None,
-    }
-    # print(comparison_results)
-    # print(model_wins_rates)
-    # print(model_wins_counter)
-    # print(len(latest_comparison_results))
-    if instances_with_multiple_annotations:
-        agreed_comparison = 0
-        relexed_agreed_comparison = 0
-        for instance_id in instances_with_multiple_annotations:
-            simplified_comparisons = []
-            for comparison_result in comparison_results[instance_id]:
-                if comparison_result == "tie":
-                    simplified_comparisons.append("tie")
-                elif target_model_a in comparison_result:
-                    simplified_comparisons.append(target_model_a)
-                elif target_model_b in comparison_result:
-                    simplified_comparisons.append(target_model_b)
+
+    if user is None:
+        # count how many instances get multiple annotations
+        instances_with_multiple_annotations = [instance_id for instance_id, results in comparison_results.items() if len(results) > 1]
+
+        agreement_results = {
+            "num_instances_with_multiple_annotations": len(instances_with_multiple_annotations),
+            "comparison_agreement": None,
+            "relexed_comparison_agreement": None,
+        }
+        # print(comparison_results)
+        # print(model_wins_rates)
+        # print(model_wins_counter)
+        # print(len(latest_comparison_results))
+        if instances_with_multiple_annotations:
+            agreed_comparison = 0
+            relexed_agreed_comparison = 0
+            for instance_id in instances_with_multiple_annotations:
+                simplified_comparisons = []
+                for comparison_result in comparison_results[instance_id]:
+                    if comparison_result == "tie":
+                        simplified_comparisons.append("tie")
+                    elif target_model_a in comparison_result:
+                        simplified_comparisons.append(target_model_a)
+                    elif target_model_b in comparison_result:
+                        simplified_comparisons.append(target_model_b)
+                    else:
+                        print("Unknown comparison result.")
+                        print(comparison_result)
+                if len(set(simplified_comparisons[-2:])) == 1:
+                    agreed_comparison += 1
+                    relexed_agreed_comparison += 1
                 else:
-                    print("Unknown comparison result.")
-                    print(comparison_result)
-            if len(set(simplified_comparisons[-2:])) == 1:
-                agreed_comparison += 1
-                relexed_agreed_comparison += 1
-            else:
-                if "tie" in simplified_comparisons[-2:]:
-                    relexed_agreed_comparison += 0.5
-        agreement_results["comparison_agreement"] = agreed_comparison / len(instances_with_multiple_annotations) 
-        agreement_results["relexed_comparison_agreement"] = relexed_agreed_comparison / len(instances_with_multiple_annotations)   
-    
-    model_wins_rates["agreement"] = agreement_results
+                    if "tie" in simplified_comparisons[-2:]:
+                        relexed_agreed_comparison += 0.5
+            agreement_results["comparison_agreement"] = agreed_comparison / len(instances_with_multiple_annotations)
+            agreement_results["relexed_comparison_agreement"] = relexed_agreed_comparison / len(instances_with_multiple_annotations)
+
+        model_wins_rates["agreement"] = agreement_results
     return model_wins_rates
 
 
-def summarize_results():
+def summarize_results(verbose=False):
     results = {}
-    users = User.query.filter_by(approved=True).all()
+    users = User.query.filter_by(approved=True, is_admin=False).all()
     records = EvaluationRecord.query.all()
 
     # get the number of completed instances for all and each user
-    results["user_contributions"] = count_user_contributions(users, records)
+    results["user_contributions"] = count_user_contributions(users, records, verbose)
 
     # get the missing instances
     results["progress"] = get_progress(records, users)
@@ -436,11 +475,14 @@ def summarize_results():
 
         acceptance_results = get_acceptance_results(comparison_records, target_model_a, target_model_b)
         comparison_results = get_comparison_results(comparison_records, target_model_a, target_model_b)
+        comparison_results_per_user = get_acceptance_and_comparison_results_per_user(comparison_records, target_model_a, target_model_b, users)
+
         results["results"][f"{target_model_a}_vs_{target_model_b}"] = {
             "acceptance_results": acceptance_results,
             "comparison_results": comparison_results,
             "feedback_records": feedback_records,
-        }        
+            "results_per_user": comparison_results_per_user
+        }
     return results
     
 
