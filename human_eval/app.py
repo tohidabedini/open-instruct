@@ -400,7 +400,7 @@ def filter_records_by_user(records, user):
 def filter_records_by_category(records, range_):
     out = []
     for record in records:
-        if int(record.instance_id) in range_:
+        if int(record.instance_index) in range_:
             out.append(record)
 
     return out
