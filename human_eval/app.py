@@ -397,11 +397,20 @@ def filter_records_by_user(records, user):
     return out
 
 
+def can_be_converted_to_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
 def filter_records_by_category(records, range_):
     out = []
     for record in records:
-        if int(record.instance_index) in range_:
-            out.append(record)
+        # record.instance_index
+        if can_be_converted_to_int(record.instance_id):
+            if int(record.instance_id) in range_:
+                out.append(record)
 
     return out
 
