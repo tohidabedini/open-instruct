@@ -35,15 +35,19 @@
                         <div class="mt-2 text-center">
                             <button id="logout-button" class="btn btn-danger mt-2">خروج</button>
                         </div>
-                        <div class="divider"></div>
 
-                        <div id="count-instances-region">
-                        تعداد {{ count_left_indices }} نمونه انجام نشده از {{ count_all_indices }} نمونه دارید.
-                        </div>
+                        {% if not current_user.is_admin %}
+                            <div class="divider"></div>
+    
+                            <div id="count-instances-region">
+                            تعداد {{ count_left_indices }} نمونه انجام نشده از {{ count_all_indices }} نمونه دارید.
+                            </div>
 
-                        <div class="mt-2 text-center">
-                            <button id="left-instances-button" class="btn btn-primary mt-2">مشاهده نمونه&zwnj;های انجام نشده</button>
-                        </div>
+                            <div class="mt-2 text-center">
+                                <button id="left-instances-button" class="btn btn-primary mt-2">مشاهده نمونه&zwnj;های انجام نشده</button>
+                            </div>
+
+                        {% endif %}
 
                         <div class="divider"></div>
                         <input type="number" id="instance-number-input" placeholder="شماره نمونه مد نظر را وارد کنید">
