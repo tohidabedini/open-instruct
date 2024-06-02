@@ -42,6 +42,22 @@ RANGES_FOR_CATEGORIES = [
     (110, 280),
     (280, 307)]
 
+CATEGORIES_RANGES_NAMES = [
+    "Bool Easy",
+    "Bool Complex",
+    "News QA Easy",
+    "News QA Complex",
+    "Long Response General",
+    "Long Response History",
+    "Paraphrase",
+    "Math Simple",
+    "Math Complex",
+    "Code Gen",
+    "Summarization",
+    "Previous General Easy Q",
+    "Previous General Hard Q",
+]
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -372,12 +388,12 @@ def get_acceptance_and_comparison_results_per_user(records, target_model_a, targ
     return out
 
 
-def get_acceptance_and_comparison_results_for_all_categories(records, target_model_a, target_model_b, ranges_for_category):
+def get_acceptance_and_comparison_results_for_all_categories(records, target_model_a, target_model_b, ranges_for_category, names_for_category):
     out = dict()
-    for range_for_category in ranges_for_category:
-        range_for_category = range(*range_for_category)
+    for i in range(len(ranges_for_category)):
+        range_for_category = range(*ranges_for_category[i])
         this = get_acceptance_and_comparison_results_per_category(records, target_model_a, target_model_b, range_for_category)
-        out[str(range_for_category)]=(this)
+        out[str(names_for_category[i])]=(this)
     return out
 
 
@@ -557,8 +573,9 @@ def summarize_results(verbose=False, by_category=True):
 
         if by_category:
             ranges_for_category = RANGES_FOR_CATEGORIES
+            names_for_category = CATEGORIES_RANGES_NAMES
 
-            results_by_category = get_acceptance_and_comparison_results_for_all_categories(comparison_records,target_model_a,target_model_b, ranges_for_category=ranges_for_category)
+            results_by_category = get_acceptance_and_comparison_results_for_all_categories(comparison_records,target_model_a,target_model_b, ranges_for_category=ranges_for_category, names_for_category=names_for_category)
 
             results["results"][f"{target_model_a}_vs_{target_model_b}"]["results_per_category"] = results_by_category
 
