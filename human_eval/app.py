@@ -259,11 +259,9 @@ def instances(index):
         context["model_b"] = model_b
         all_users_annotations = get_all_users_annotations_for_one_instance(index)
 
-        all_users_annotations_neutralized = shuffle_neutralizer(model_a, model_b, all_users_annotations)
-
-        context["all_users_annotations"] = all_users_annotations_neutralized
-
+        context["all_users_annotations"] = shuffle_neutralizer(model_a, model_b, all_users_annotations)
         context["approved_users"] = get_approved_users()
+        context["user_contributions"] = get_user_contribution_result()
 
 
 
@@ -327,6 +325,12 @@ def get_instance_index_difference(evaluator, int_indices):
     difference = set(int_indices) - set(existing_indices)
 
     return sorted(list(difference))
+
+def get_user_contribution_result():
+    users = get_approved_users()
+    records = EvaluationRecord.query.all()
+    user_contributions = count_user_contributions(users, records)
+    return user_contributions
 
 
 def count_user_contributions(users, records, verbose=False):
@@ -581,7 +585,7 @@ def get_comparison_results(records, target_model_a, target_model_b, user=None, b
 
 def summarize_results(verbose=False, by_category=True):
     results = {}
-    users = User.query.filter_by(approved=True, is_admin=False).all()
+    users = get_approved_users()
     records = EvaluationRecord.query.all()
 
     # get the number of completed instances for all and each user
