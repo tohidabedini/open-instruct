@@ -163,69 +163,108 @@
                     </div>
                 </div>
             </div>
-            <div id="evaluation-region">
-                <div class="row">
-                    <div class="col icon-col">
-                        <button class="role-icon">📝</button>
+            {% if current_user.is_admin %}
+
+                <div id="evaluation-region">
+                    <div class="row">
+                        <div class="col icon-col">
+                            <button class="role-icon">📝</button>
+                        </div>
+                        <div class="col message-col">
+                            <h5>ارزیابی های انجام شده توسط کاربران:</h5>
+                        </div>
                     </div>
-                    <div class="col message-col">
-                        <h5>اکنون لطفاً دو خروجی را بر اساس دانش، ترجیحات خود و هر ابزار خارجی (مانند جستجوی Google یا Translate) ارزیابی کنید.</h5>
-                    </div>
-                </div>
-
-                <div class="row mt-3">
-                    <div class="col icon-col">
-                    </div>
-                    <div class="col">
-                        <form style="font-size: 18px;">
-                            <div class="form-group eval-form-item">
-                                <p>سؤال 1: آیا خروجی A پاسخ قابل قبولی است؟ یک پاسخ قابل قبول باید ① به درخواست کاربر پاسخ دهد ② بدون خطاهای مهم باشد ③ متن بی‌معنی نداشته باشد (مانند تکرار).</p>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="a-is-acceptable" id="a-is-acceptable-yes" value="yes">
-                                    <label class="form-check-label" for="a-is-acceptable-yes">بله</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="a-is-acceptable" id="a-is-acceptable-no" value="no">
-                                    <label class="form-check-label" for="a-is-acceptable-no">خیر</label>
-                                </div>
-                            </div>
-                            <div class="form-group eval-form-item">
-                                <p>سؤال 2: آیا خروجی B پاسخ قابل قبولی است؟ یک پاسخ قابل قبول باید ① به درخواست کاربر پاسخ دهد ② بدون خطاهای مهم باشد ③ متن بی‌معنی نداشته باشد (مانند تکرار).</p>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="b-is-acceptable" id="b-is-acceptable-yes" value="yes">
-                                    <label class="form-check-label" for="b-is-acceptable-yes">بله</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="b-is-acceptable" id="b-is-acceptable-no" value="no">
-                                    <label class="form-check-label" for="b-is-acceptable-no">خیر</label>
-                                </div>
-                            </div>
-                            <div class="form-group eval-form-item">
-                                <p>سؤال 3: لطفاً پاسخی را که ترجیح می‌دهید انتخاب کنید (بر اساس مفید بودن).</p>
-                                <div class="btn-group" role="group">
-                                    <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-a-better" value="a-is-better" autocomplete="off">
-                                    <label class="btn btn-secondary" for="preference-selection-a-better" style="font-size: 15px;">A به وضوح بهتر است</label>
-
-                                    <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-a-slightly-better" value="a-is-slightly-better" autocomplete="off">
-                                    <label class="btn btn-secondary" for="preference-selection-a-slightly-better" style="font-size: 15px;">A کمی بهتر است</label>
-
-                                    <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-tie" value="tie" autocomplete="off">
-                                    <label class="btn btn-secondary" for="preference-selection-tie" style="font-size: 15px;">مساوی</label>
-
-                                    <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-b-slightly-better" value="b-is-slightly-better" autocomplete="off">
-                                    <label class="btn btn-secondary" for="preference-selection-b-slightly-better" style="font-size: 15px;">B کمی بهتر است</label>
-
-                                    <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-b-better" value="b-is-better" autocomplete="off">
-                                    <label class="btn btn-secondary" for="preference-selection-b-better" style="font-size: 15px;">B به وضوح بهتر است</label>
-                                </div>
-                            </div>
-                            <div class="mt-5" style="text-align: center;">
-                                <button type="submit" class="btn btn-primary" id="evaluation-submit">ارسال</button>
-                            </div>
-                        </form>
+                    <br>
+                    <div class="table-responsive">
+                        <table class="table table-bordered center-align beautiful-table">
+                            <thead>
+                                <tr>
+                                    <th>نام کاربر</th>
+                                    <th>پاسخ A قابل قبول است</th>
+                                    <th>پاسخ B قابل قبول است</th>
+                                    <th>ترجیح</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in approved_users %}
+                                    {% set user_reponse = all_users_annotations[user.username] %}
+                                    <tr>
+                                        <td>{{ user.username }}</td>
+                                        <td>{{ user_reponse.completion_a_is_acceptable }}</td>
+                                        <td>{{ user_reponse.completion_b_is_acceptable }}</td>
+                                        <td>{{ user_reponse.preference }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
+
+            {% else %}
+                <div id="evaluation-region">
+                    <div class="row">
+                        <div class="col icon-col">
+                            <button class="role-icon">📝</button>
+                        </div>
+                        <div class="col message-col">
+                            <h5>اکنون لطفاً دو خروجی را بر اساس دانش، ترجیحات خود و هر ابزار خارجی (مانند جستجوی Google یا Translate) ارزیابی کنید.</h5>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col icon-col">
+                        </div>
+                        <div class="col">
+                            <form style="font-size: 18px;">
+                                <div class="form-group eval-form-item">
+                                    <p>سؤال 1: آیا خروجی A پاسخ قابل قبولی است؟ یک پاسخ قابل قبول باید ① به درخواست کاربر پاسخ دهد ② بدون خطاهای مهم باشد ③ متن بی‌معنی نداشته باشد (مانند تکرار).</p>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="a-is-acceptable" id="a-is-acceptable-yes" value="yes">
+                                        <label class="form-check-label" for="a-is-acceptable-yes">بله</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="a-is-acceptable" id="a-is-acceptable-no" value="no">
+                                        <label class="form-check-label" for="a-is-acceptable-no">خیر</label>
+                                    </div>
+                                </div>
+                                <div class="form-group eval-form-item">
+                                    <p>سؤال 2: آیا خروجی B پاسخ قابل قبولی است؟ یک پاسخ قابل قبول باید ① به درخواست کاربر پاسخ دهد ② بدون خطاهای مهم باشد ③ متن بی‌معنی نداشته باشد (مانند تکرار).</p>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="b-is-acceptable" id="b-is-acceptable-yes" value="yes">
+                                        <label class="form-check-label" for="b-is-acceptable-yes">بله</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="b-is-acceptable" id="b-is-acceptable-no" value="no">
+                                        <label class="form-check-label" for="b-is-acceptable-no">خیر</label>
+                                    </div>
+                                </div>
+                                <div class="form-group eval-form-item">
+                                    <p>سؤال 3: لطفاً پاسخی را که ترجیح می‌دهید انتخاب کنید (بر اساس مفید بودن).</p>
+                                    <div class="btn-group" role="group">
+                                        <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-a-better" value="a-is-better" autocomplete="off">
+                                        <label class="btn btn-secondary" for="preference-selection-a-better" style="font-size: 15px;">A به وضوح بهتر است</label>
+
+                                        <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-a-slightly-better" value="a-is-slightly-better" autocomplete="off">
+                                        <label class="btn btn-secondary" for="preference-selection-a-slightly-better" style="font-size: 15px;">A کمی بهتر است</label>
+
+                                        <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-tie" value="tie" autocomplete="off">
+                                        <label class="btn btn-secondary" for="preference-selection-tie" style="font-size: 15px;">مساوی</label>
+
+                                        <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-b-slightly-better" value="b-is-slightly-better" autocomplete="off">
+                                        <label class="btn btn-secondary" for="preference-selection-b-slightly-better" style="font-size: 15px;">B کمی بهتر است</label>
+
+                                        <input type="radio" class="btn-check" name="preference-selection" id="preference-selection-b-better" value="b-is-better" autocomplete="off">
+                                        <label class="btn btn-secondary" for="preference-selection-b-better" style="font-size: 15px;">B به وضوح بهتر است</label>
+                                    </div>
+                                </div>
+                                <div class="mt-5" style="text-align: center;">
+                                    <button type="submit" class="btn btn-primary" id="evaluation-submit">ارسال</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 </body>

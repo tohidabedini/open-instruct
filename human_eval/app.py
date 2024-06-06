@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from copy import deepcopy
 
 random.seed(42)
 
@@ -151,8 +152,16 @@ def list_users():
         db.session.commit()
         return redirect(url_for('list_users'))
 
-    approved_users = User.query.filter_by(approved=True).all()
+    approved_users = get_approved_users()
     return render_template('list_users.html', users=approved_users)
+
+def get_approved_users(non_admin=True):
+    if non_admin:
+        approved_users = User.query.filter_by(approved=True, is_admin=False).all()
+    else:
+        approved_users = User.query.filter_by(approved=True).all()
+
+    return approved_users
 
 @app.route('/logout')
 @login_required
@@ -207,6 +216,32 @@ def get_left_instances():
     return render_template('left_instances.html', **context)
 
 
+def shuffle_neutralizer(model_a, model_b, record):
+    record = deepcopy(record)
+    for user_record in record:
+        user_record = record[user_record]
+        if user_record is None:
+            continue
+        if user_record.model_a == model_b and user_record.model_b == model_a:
+            user_record.model_a, user_record.model_b = user_record.model_b, user_record.model_a
+            user_record.preference = prefernce_swapper(user_record.preference)
+            user_record.completion_a_is_acceptable,  user_record.completion_b_is_acceptable = user_record.completion_b_is_acceptable, user_record.completion_a_is_acceptable
+    return record
+
+def prefernce_swapper(preference):
+    if preference == 'tie':
+        return 'tie'
+    elif preference == 'a-is-better':
+        return 'b-is-better'
+    elif preference == 'b-is-better':
+        return 'a-is-better'
+    elif preference == 'a-is-slightly-better':
+        return 'b-is-slightly-better'
+    elif preference == 'b-is-slightly-better':
+        return 'a-is-slightly-better'
+    else:
+        raise ValueError('Unknown preference {}'.format(preference))
+
 @app.route('/instances/<int:index>')
 def instances(index):
     existing_feedback = EvaluationRecord.query.filter_by(instance_index=index, evaluator=current_user.username).first()
@@ -222,8 +257,33 @@ def instances(index):
         model_b = COMPARISON_INSTANCES[index]["completions"][1]["model"]
         context["model_a"] = model_a
         context["model_b"] = model_b
+        all_users_annotations = get_all_users_annotations_for_one_instance(index)
+
+        all_users_annotations_neutralized = shuffle_neutralizer(model_a, model_b, all_users_annotations)
+
+        context["all_users_annotations"] = all_users_annotations_neutralized
+
+        context["approved_users"] = get_approved_users()
+
+
 
     return render_template('index.html', **context)
+
+def get_record_of_one_user_for_one_instance(user, instance_index):
+    existing_record = EvaluationRecord.query.filter_by(instance_index=instance_index,
+                                                         evaluator=user.username).first()
+    if existing_record:
+        return existing_record
+    else:
+        return None
+
+def get_all_users_annotations_for_one_instance(instance_index):
+    response=dict()
+    approved_users = get_approved_users()
+    for user in approved_users:
+        response[user.username] = get_record_of_one_user_for_one_instance(user, instance_index)
+
+    return response
 
 
 @app.route("/api/model-outputs/<int:index>", methods=["GET"])

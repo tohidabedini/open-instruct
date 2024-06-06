@@ -39,12 +39,10 @@
                         <form method="POST">
                             <ul class="list-group">
                             {% for user in users %}
-                                {% if not user.is_admin %}
-                                    <li class="list-group-item user-list-item">
-                                        <span class="username">{{ user.username }}</span>
-                                        <button type="submit" class="btn btn-dark mt-2" name="user_id" value="{{ user.id }}">لغو دسترسی</button>
-                                    </li>
-                                {% endif %}
+                                <li class="list-group-item user-list-item">
+                                    <span class="username">{{ user.username }}</span>
+                                    <button type="submit" class="btn btn-dark mt-2" name="user_id" value="{{ user.id }}">لغو دسترسی</button>
+                                </li>
                             {% endfor %}
                             </ul>
                         </form>
