@@ -47,6 +47,19 @@
                                 <button id="left-instances-button" class="btn btn-primary mt-2">مشاهده نمونه&zwnj;های انجام نشده</button>
                             </div>
 
+                            <div class="divider"></div>
+
+                            {% if existing_feedback and existing_feedback.completion_a_is_acceptable %}
+                                <div class="mt-2 text-center">
+                                    <button id="instance-done-button" class="btn btn-success mt-2">نمونه قبلا برچسب&zwnj;زنی شده است.</button>
+                                </div>
+
+                            {%  else %}
+                                 <div class="mt-2 text-center">
+                                    <button id="instance-done-button" class="btn btn-danger mt-2">نمونه قبلا برچسب&zwnj;زنی نشده است.</button>
+                                </div>
+                            {% endif %}
+
                         {% endif %}
 
                         <div class="divider"></div>
