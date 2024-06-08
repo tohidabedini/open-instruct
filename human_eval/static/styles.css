@@ -218,3 +218,11 @@ xmp {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
+
+table td.green-background {
+  background-color: #74C365;
+}
+
+table td.red-background {
+  background-color: #F08080;
+}

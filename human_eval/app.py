@@ -243,6 +243,7 @@ def prefernce_swapper(preference):
         raise ValueError('Unknown preference {}'.format(preference))
 
 @app.route('/instances/<int:index>')
+@login_required
 def instances(index):
     existing_feedback = EvaluationRecord.query.filter_by(instance_index=index, evaluator=current_user.username).first()
     context = {
@@ -262,8 +263,7 @@ def instances(index):
         context["all_users_annotations"] = shuffle_neutralizer(model_a, model_b, all_users_annotations)
         context["approved_users"] = get_approved_users()
         context["user_contributions"] = get_user_contribution_result()
-
-
+        context["instances_count"] = len(COMPARISON_INSTANCES)
 
     return render_template('index.html', **context)
 
@@ -285,6 +285,7 @@ def get_all_users_annotations_for_one_instance(instance_index):
 
 
 @app.route("/api/model-outputs/<int:index>", methods=["GET"])
+@login_required
 def get_model_outputs(index):
     if 0 <= index < len(COMPARISON_INSTANCES):
         prompt = COMPARISON_INSTANCES[index]["prompt"]
